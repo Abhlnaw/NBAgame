@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from rest_framework import viewsets
 from .models import Team, Player
-from .serializers import TeamSerializer, PlayerSerializer
+from .serializers import TeamSerializer, PlayerSerializer, TeamNameSerializer
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 import json
@@ -147,7 +147,11 @@ class TeamViewSet(viewsets.ReadOnlyModelViewSet):
     API endpoint that allows teams to be viewed.
     """
     queryset = Team.objects.all()
-    serializer_class = TeamSerializer
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return TeamNameSerializer
+        return TeamSerializer
 
 class PlayerViewSet(viewsets.ReadOnlyModelViewSet):
     """

@@ -1,3 +1,4 @@
+{% load static %}
 {% load game_tags %}
 <!DOCTYPE html>
 <html lang="en">
@@ -5,8 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Time Random Wheel</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/winwheel.js@2.8.0/Winwheel.min.js"></script>
+    <script src="{% static 'game/js/TweenMax.min.js' %}" defer></script>
+    <script src="{% static 'game/js/Winwheel.min.js' %}" defer></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
@@ -174,23 +175,42 @@
                         }
                     });
 
+                    console.log('Wheel created successfully:', theWheel);
+                    console.log('Number of segments:', segments.length);
+                    console.log('Available methods on theWheel:', Object.getOwnPropertyNames(theWheel));
+                    console.log('theWheel.startAnimation type:', typeof theWheel.startAnimation);
                     spinButton.disabled = false;
+                    spinButton.textContent = 'Spin the Wheel!';
                 })
                 .catch(error => {
                     console.error('Error fetching or initializing wheel:', error);
-                    spinButton.textContent = 'Could not load wheel';
+                    const errorMsg = `Could not load wheel. Please ensure you are using http:// and not https://. Check console for details.`;
+                    spinButton.textContent = 'Error: Could not load wheel';
+                    alert(errorMsg + '\\n\\n' + error);
                 });
             
             window.startSpin = function() {
+                console.log('startSpin called, theWheel:', theWheel);
                 if (theWheel) {
+                    console.log('Starting wheel animation...');
                     spinButton.disabled = true;
+                    spinButton.textContent = 'Spinning...';
                     theWheel.startAnimation();
+                } else {
+                    console.error('theWheel is not defined!');
+                    alert('Wheel not loaded properly. Please refresh the page.');
                 }
             }
 
             window.alertPrize = function(indicatedSegment) {
+                console.log('Wheel stopped on:', indicatedSegment);
                 const teamAbbr = indicatedSegment.text;
-                window.location.href = `/select_player/${teamAbbr}/`;
+                spinButton.textContent = `Selected: ${teamAbbr}`;
+                
+                // Give a moment to see the result before redirecting
+                setTimeout(() => {
+                    window.location.href = `/select_player/${teamAbbr}/`;
+                }, 1500);
             }
 
             function getRandomColor() {
