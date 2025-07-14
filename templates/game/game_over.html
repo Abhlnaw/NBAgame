@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Over</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+        h1 { color: #333; }
+        .teams-container { display: flex; justify-content: space-around; }
+        .team { border: 1px solid #ccc; padding: 20px; border-radius: 5px; }
+        .play-again-button { margin-top: 30px; padding: 15px 30px; font-size: 1.2em; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Game Over</h1>
+
+    <h2>Player {{ winner }} Wins!</h2>
+
+    <div class="teams-container">
+        <div class="team">
+            <h2>Player 1's Team (Score: {{ team_1_score }})</h2>
+            <ul>
+                {% for player in game_state.player_1_team %}
+                <li>{{ player.name }} ({{ player.position }})</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="team">
+            <h2>Player 2's Team (Score: {{ team_2_score }})</h2>
+            <ul>
+                {% for player in game_state.player_2_team %}
+                <li>{{ player.name }} ({{ player.position }})</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <button class="play-again-button" onclick="location.href='/'">Play Again</button>
+</body>
+</html> 
