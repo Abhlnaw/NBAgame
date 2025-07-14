@@ -1,3 +1,4 @@
+{% load game_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,22 +19,18 @@
     <h2>Player {{ winner }} Wins!</h2>
 
     <div class="teams-container">
+        {% for i in game_state.num_players|get_range %}
         <div class="team">
-            <h2>Player 1's Team (Score: {{ team_1_score }})</h2>
+            <h2>Player {{ i }}'s Team (Score: {{ game_state|get_item:"team_"|add:i|add:"_score" }})</h2>
             <ul>
-                {% for player in game_state.player_1_team %}
-                <li>{{ player.name }} ({{ player.position }})</li>
-                {% endfor %}
+                {% with team_key="player_"|add:i|add:"_team" %}
+                    {% for player in game_state|get_item:team_key %}
+                    <li>{{ player.name }} ({{ player.position }})</li>
+                    {% endfor %}
+                {% endwith %}
             </ul>
         </div>
-        <div class="team">
-            <h2>Player 2's Team (Score: {{ team_2_score }})</h2>
-            <ul>
-                {% for player in game_state.player_2_team %}
-                <li>{{ player.name }} ({{ player.position }})</li>
-                {% endfor %}
-            </ul>
-        </div>
+        {% endfor %}
     </div>
 
     <button class="play-again-button" onclick="location.href='/'">Play Again</button>

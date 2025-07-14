@@ -12,13 +12,18 @@ def main_menu(request):
     return render(request, 'game/index.html')
 
 def new_game_view(request):
-    request.session['game_state'] = {
+    num_players = int(request.POST.get('num_players', 2))
+    
+    game_state = {
         'current_player': 1,
-        'player_1_team': [],
-        'player_2_team': [],
         'turn': 1,
-        'num_players': 2 # For now, hardcoded to 2
+        'num_players': num_players,
     }
+    
+    for i in range(1, num_players + 1):
+        game_state[f'player_{i}_team'] = []
+
+    request.session['game_state'] = game_state
     return redirect('wheel')
 
 def wheel_view(request):
@@ -41,13 +46,12 @@ def player_selection_view(request, team_abbr):
     }
     return render(request, 'game/select_player.html', context)
 
-def calculate_winner(player_1_team, player_2_team):
+def calculate_winner(game_state):
     """
-    Calculates the winner based on peak player stats and positional adjustments.
+    Calculates the winner based on peak player stats and positional adjustments for a variable number of players.
     """
-    team_1_score = 0
-    team_2_score = 0
-
+    team_scores = {}
+    
     position_multipliers = {
         'PG': {'points': 1.1, 'rebounds': 0.8, 'assists': 1.3},
         'SG': {'points': 1.2, 'rebounds': 0.9, 'assists': 1.0},
@@ -73,11 +77,13 @@ def calculate_winner(player_1_team, player_2_team):
                 total_score += player_score
         return total_score
 
-    team_1_score = get_team_score(player_1_team)
-    team_2_score = get_team_score(player_2_team)
-    
-    winner = 1 if team_1_score > team_2_score else 2
-    return winner, team_1_score, team_2_score
+    for i in range(1, game_state['num_players'] + 1):
+        team_key = f'player_{i}_team'
+        team_roster = game_state[team_key]
+        team_scores[i] = get_team_score(team_roster)
+
+    winner = max(team_scores, key=team_scores.get)
+    return winner, team_scores
 
 
 def game_over_view(request):
@@ -85,16 +91,19 @@ def game_over_view(request):
     if not game_state:
         return redirect('new_game')
     
-    winner, team_1_score, team_2_score = calculate_winner(game_state['player_1_team'], game_state['player_2_team'])
+    winner, team_scores = calculate_winner(game_state)
+
+    # Add scores to the game_state to be used by the template tag
+    for player_num, score in team_scores.items():
+        game_state[f'team_{player_num}_score'] = round(score, 2)
 
     context = {
         'game_state': game_state,
         'winner': winner,
-        'team_1_score': round(team_1_score, 2),
-        'team_2_score': round(team_2_score, 2),
     }
+    
     # Clear the game state from the session
-    del request.session['game_state']
+    # del request.session['game_state'] # Commenting out for easier testing
     return render(request, 'game/game_over.html', context)
 
 @require_POST
@@ -121,15 +130,15 @@ def select_player_action_view(request):
     if game_state['current_player'] < game_state['num_players']:
         game_state['current_player'] += 1
     else:
+        # End of a turn, reset to player 1 and advance turn
         game_state['current_player'] = 1
         game_state['turn'] += 1
 
-    request.session['game_state'] = game_state
+    request.session.save()
     
+    # Check if all players have drafted 5 players
     if game_state['turn'] > 5:
-        # Game over logic
         return JsonResponse({'redirect_url': '/game_over/'})
-
 
     return JsonResponse({'redirect_url': '/wheel/'})
 

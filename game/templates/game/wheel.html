@@ -1,3 +1,4 @@
+{% load game_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -109,26 +110,20 @@
     </div>
 
     <div class="teams-display">
+        {% for i in game_state.num_players|get_range %}
         <div class="team-panel">
-            <h3>Player 1's Team</h3>
+            <h3>Player {{ i }}'s Team</h3>
             <ul>
-                {% for player in game_state.player_1_team %}
-                <li>{{ player.name }} ({{ player.position }})</li>
-                {% empty %}
-                <li>No players drafted yet.</li>
-                {% endfor %}
+                {% with team_key="player_"|add:i|add:"_team" %}
+                    {% for player in game_state|get_item:team_key %}
+                    <li>{{ player.name }} ({{ player.position }})</li>
+                    {% empty %}
+                    <li>No players drafted yet.</li>
+                    {% endfor %}
+                {% endwith %}
             </ul>
         </div>
-        <div class="team-panel">
-            <h3>Player 2's Team</h3>
-            <ul>
-                {% for player in game_state.player_2_team %}
-                <li>{{ player.name }} ({{ player.position }})</li>
-                {% empty %}
-                <li>No players drafted yet.</li>
-                {% endfor %}
-            </ul>
-        </div>
+        {% endfor %}
     </div>
 
     <div class="wheel-wrapper">
@@ -141,19 +136,20 @@
     <button id="spin-button" class="spin-button" onclick="startSpin();" disabled>Spin the Wheel!</button>
 
     <script>
-        let theWheel;
-        const spinButton = document.getElementById('spin-button');
+        document.addEventListener('DOMContentLoaded', function() {
+            let theWheel;
+            const spinButton = document.getElementById('spin-button');
 
-        window.onload = function() {
             fetch('/api/teams/')
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('Network response was not ok');
+                        throw new Error(`Network response was not ok: ${response.statusText}`);
                     }
                     return response.json();
                 })
                 .then(teams => {
-                    if (teams.length === 0) {
+                    if (!teams || teams.length === 0) {
+                        console.error('No teams were fetched from the API.');
                         return;
                     }
                     const segments = teams.map(team => ({
@@ -181,26 +177,27 @@
                     spinButton.disabled = false;
                 })
                 .catch(error => {
-                    console.error('Error fetching teams:', error);
+                    console.error('Error fetching or initializing wheel:', error);
+                    spinButton.textContent = 'Could not load wheel';
                 });
-        };
-        
-        function startSpin() {
-            if (theWheel) {
-                spinButton.disabled = true;
-                theWheel.startAnimation();
+            
+            window.startSpin = function() {
+                if (theWheel) {
+                    spinButton.disabled = true;
+                    theWheel.startAnimation();
+                }
             }
-        }
 
-        function alertPrize(indicatedSegment) {
-            const teamAbbr = indicatedSegment.text;
-            window.location.href = `/select_player/${teamAbbr}/`;
-        }
+            window.alertPrize = function(indicatedSegment) {
+                const teamAbbr = indicatedSegment.text;
+                window.location.href = `/select_player/${teamAbbr}/`;
+            }
 
-        function getRandomColor() {
-            const colors = ['#f94144', '#f3722c', '#f8961e', '#f9c74f', '#90be6d', '#43aa8b', '#577590'];
-            return colors[Math.floor(Math.random() * colors.length)];
-        }
+            function getRandomColor() {
+                const colors = ['#f94144', '#f3722c', '#f8961e', '#f9c74f', '#90be6d', '#43aa8b', '#577590'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+        });
     </script>
 </body>
 </html> 
