@@ -38,35 +38,80 @@
             backdrop-filter: blur(10px);
         }
 
-        .wheel-container {
+        .wheel-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .wheel-wrapper {
+            position: relative;
+            display: inline-block;
             background: rgba(255, 255, 255, 0.1);
-            padding: 30px;
+            padding: 40px;
             border-radius: 20px;
             backdrop-filter: blur(10px);
-            margin-bottom: 30px;
+        }
+
+        /* Team indicator above the wheel */
+        .team-indicator {
+            background: rgba(255, 140, 0, 0.9);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1em;
+            margin-bottom: 15px;
+            min-height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Orange arrow pointer - properly centered */
+        .wheel-pointer {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 30px solid #ff8c00;
+            z-index: 10;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        .wheel-container {
+            position: relative;
+            display: inline-block;
         }
 
         #canvas {
             border-radius: 50%;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            display: block;
         }
 
         .spin-button {
             background: linear-gradient(45deg, #ff6b6b, #ee5a24);
             color: white;
             border: none;
-            padding: 15px 40px;
-            font-size: 1.3em;
-            border-radius: 50px;
+            padding: 15px 30px;
+            border-radius: 25px;
             cursor: pointer;
-            margin: 20px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-top: 25px;
         }
 
         .spin-button:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .spin-button:disabled {
@@ -80,7 +125,6 @@
             gap: 20px;
             justify-content: center;
             flex-wrap: wrap;
-            margin-top: 30px;
         }
 
         .team {
@@ -88,20 +132,179 @@
             padding: 15px;
             border-radius: 10px;
             backdrop-filter: blur(10px);
-            min-width: 200px;
+            min-width: 180px;
+        }
+
+        .current-player {
+            border: 2px solid #ffd700;
         }
 
         .loading {
+            text-align: center;
             font-size: 1.2em;
             color: #ffd700;
+            margin: 20px 0;
         }
 
         .error {
             color: #ff6b6b;
             background: rgba(255, 107, 107, 0.1);
-            padding: 10px;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 2% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: white;
+        }
+
+        .modal h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            box-sizing: border-box;
+        }
+
+        .search-input:focus {
+            outline: none;
+            background: white;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .player-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .player-card:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .player-card.selected {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        .player-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .position-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .position-select {
+            padding: 8px 12px;
             border-radius: 5px;
-            margin: 10px 0;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 0.9em;
+            flex: 1;
+        }
+
+        .select-player-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            display: block;
+            margin: 20px auto 0;
+        }
+
+        .select-player-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .select-player-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .no-players {
+            text-align: center;
+            color: #ccc;
+            font-style: italic;
+            padding: 40px;
         }
     </style>
 </head>
@@ -114,16 +317,26 @@
             <p>Spin the wheel to select a team, then choose a player!</p>
         </div>
 
-        <div class="wheel-container">
-            <canvas id="canvas" width="500" height="500"></canvas>
+        <div class="wheel-section">
+            <div class="team-indicator" id="team-indicator">
+                Loading teams...
+            </div>
+            
+            <div class="wheel-wrapper">
+                <div class="wheel-pointer"></div>
+                <div class="wheel-container">
+                    <canvas id="canvas" width="500" height="500"></canvas>
+                </div>
+            </div>
+            
             <div id="wheel-message" class="loading">Loading teams...</div>
             <button id="spin-button" class="spin-button" disabled>Spin the Wheel!</button>
         </div>
 
         <div class="teams-display">
             {% for i in game_state.num_players|get_range %}
-            <div class="team">
-                <h3>Player {{ i }}'s Team</h3>
+            <div class="team {% if i == game_state.current_player %}current-player{% endif %}">
+                <h3>Player {{ i }}'s Team {% if i == game_state.current_player %}(Current){% endif %}</h3>
                 <ul style="text-align: left;">
                     {% with team_key="player_"|add:i|add:"_team" %}
                         {% for player in game_state|get_item:team_key %}
@@ -138,6 +351,25 @@
         </div>
     </div>
 
+    <!-- Player Selection Modal -->
+    <div id="playerModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modal-team-name">Select a Player</h2>
+            
+            <div class="search-container">
+                <input type="text" id="player-search" class="search-input" placeholder="Search for a player..." />
+            </div>
+            
+            <div id="players-grid" class="players-grid">
+                <div class="no-players">Loading players...</div>
+            </div>
+            
+            <button id="confirm-selection" class="select-player-btn" disabled>Select Player</button>
+            <div id="selection-status" style="text-align: center; margin-top: 15px;"></div>
+        </div>
+    </div>
+
     <!-- Load JavaScript libraries from local static files -->
     {% load static %}
     <script src="{% static 'game/js/TweenMax.min.js' %}"></script>
@@ -146,6 +378,10 @@
     <script>
         let theWheel;
         let teams = [];
+        let allPlayers = [];
+        let selectedPlayer = null;
+        let selectedTeam = null;
+        let updateInterval;
 
         console.log('Starting wheel initialization...');
 
@@ -196,24 +432,56 @@
                     'segments': segments,
                     'animation': {
                         'type': 'spinToStop',
-                        'duration': 3,
+                        'duration': 4,
                         'spins': 8,
                         'callbackFinished': onWheelStop
                     }
                 });
 
                 console.log('Wheel created successfully');
-                console.log('Wheel object type:', typeof theWheel);
-                console.log('Available methods:', Object.getOwnPropertyNames(theWheel));
-                console.log('startAnimation method type:', typeof theWheel.startAnimation);
 
                 document.getElementById('wheel-message').style.display = 'none';
                 document.getElementById('spin-button').disabled = false;
+                
+                // Show initial team under arrow
+                updateArrowIndicator();
                 
             } catch (error) {
                 console.error('Error creating wheel:', error);
                 document.getElementById('wheel-message').innerHTML = 
                     '<div class="error">Error creating wheel: ' + error.message + '</div>';
+            }
+        }
+
+        function updateArrowIndicator() {
+            if (!theWheel || !teams.length) {
+                document.getElementById('team-indicator').textContent = 'Loading teams...';
+                return;
+            }
+            
+            try {
+                // Get the current rotation angle of the wheel
+                const currentRotation = theWheel.rotationAngle || 0;
+                
+                // Calculate which segment the arrow is pointing to
+                const segmentAngle = 360 / teams.length;
+                
+                // Winwheel library uses this calculation for determining the indicated segment
+                // The arrow points to the top, so we need to find which segment is there
+                let indicatedAngle = (360 - currentRotation % 360) % 360;
+                
+                // Calculate segment index - the first segment starts at the top
+                let segmentIndex = Math.floor(indicatedAngle / segmentAngle);
+                
+                // Ensure the index is within bounds
+                segmentIndex = segmentIndex % teams.length;
+                
+                if (segmentIndex >= 0 && segmentIndex < teams.length) {
+                    const team = teams[segmentIndex];
+                    document.getElementById('team-indicator').textContent = team.name;
+                }
+            } catch (error) {
+                console.error('Error updating arrow indicator:', error);
             }
         }
 
@@ -239,11 +507,19 @@
 
             if (typeof theWheel.startAnimation !== 'function') {
                 console.error('startAnimation is not a function:', typeof theWheel.startAnimation);
-                console.log('Wheel object:', theWheel);
                 return;
             }
 
             document.getElementById('spin-button').disabled = true;
+            
+            // Reset animation properties to ensure consistent speed
+            theWheel.animation.duration = 4;
+            theWheel.animation.spins = 8;
+            theWheel.animation.type = 'spinToStop';
+            
+            // Update the arrow indicator during spinning
+            updateInterval = setInterval(updateArrowIndicator, 50);
+            
             theWheel.startAnimation();
         }
 
@@ -251,22 +527,209 @@
             console.log('Wheel stopped on segment:', indicatedSegment);
             console.log('Segment text:', indicatedSegment.text);
             
-            // Find team by abbreviation (segment text is the abbreviation)
-            const selectedTeam = teams.find(team => team.abbreviation === indicatedSegment.text);
+            // Clear the update interval
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
+            
+            // Final update to show what the arrow is pointing to
+            updateArrowIndicator();
+            
+            // Reset the wheel's rotation angle to prevent accumulation issues
+            theWheel.rotationAngle = theWheel.rotationAngle % 360;
+            
+            // Find team by abbreviation
+            selectedTeam = teams.find(team => team.abbreviation === indicatedSegment.text);
             console.log('Selected team:', selectedTeam);
             
             if (selectedTeam) {
-                const teamAbbr = selectedTeam.abbreviation;
-                console.log('Redirecting to player selection for team:', teamAbbr);
-                window.location.href = `/select_player/${teamAbbr}/`;
+                showPlayerModal(selectedTeam);
             } else {
                 console.error('Could not find team for segment:', indicatedSegment);
-                console.error('Available teams:', teams.map(t => t.abbreviation));
+                document.getElementById('spin-button').disabled = false;
             }
         }
 
-        // Attach spin function to button
+        function showPlayerModal(team) {
+            document.getElementById('modal-team-name').textContent = `Select a Player from ${team.name}`;
+            document.getElementById('playerModal').style.display = 'block';
+            
+            // Reset modal state
+            document.getElementById('players-grid').innerHTML = '<div class="no-players">Loading players...</div>';
+            document.getElementById('confirm-selection').disabled = true;
+            document.getElementById('selection-status').innerHTML = '';
+            selectedPlayer = null;
+            
+            // Fetch players for this team using the team's abbreviation
+            fetch(`/api/teams/`)
+                .then(response => response.json())
+                .then(data => {
+                    // Find the full team data including players
+                    const fullTeam = data.find(t => t.abbreviation === team.abbreviation);
+                    if (fullTeam && fullTeam.players) {
+                        allPlayers = fullTeam.players;
+                        displayPlayers(allPlayers);
+                    } else {
+                        throw new Error('No players found for this team');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching players:', error);
+                    document.getElementById('players-grid').innerHTML = 
+                        '<div class="no-players">Error loading players: ' + error.message + '</div>';
+                });
+        }
+
+        function displayPlayers(players) {
+            const grid = document.getElementById('players-grid');
+            
+            if (players.length === 0) {
+                grid.innerHTML = '<div class="no-players">No players available for this team</div>';
+                return;
+            }
+            
+            grid.innerHTML = players.map(player => `
+                <div class="player-card" data-player-id="${player.id}" data-player-name="${player.name}">
+                    <div class="player-name">${player.name}</div>
+                    <div class="position-selector">
+                        <select class="position-select">
+                            <option value="PG">Point Guard (PG)</option>
+                            <option value="SG">Shooting Guard (SG)</option>
+                            <option value="SF">Small Forward (SF)</option>
+                            <option value="PF">Power Forward (PF)</option>
+                            <option value="C">Center (C)</option>
+                        </select>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Add click listeners to player cards
+            document.querySelectorAll('.player-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    selectPlayerCard(this);
+                });
+            });
+        }
+
+        function selectPlayerCard(card) {
+            // Remove previous selection
+            document.querySelectorAll('.player-card').forEach(c => c.classList.remove('selected'));
+            
+            // Select current card
+            card.classList.add('selected');
+            
+            selectedPlayer = {
+                id: parseInt(card.dataset.playerId),
+                name: card.dataset.playerName,
+                position: card.querySelector('.position-select').value
+            };
+            
+            document.getElementById('confirm-selection').disabled = false;
+        }
+
+        function filterPlayers() {
+            const searchTerm = document.getElementById('player-search').value.toLowerCase();
+            const filteredPlayers = allPlayers.filter(player => 
+                player.name.toLowerCase().includes(searchTerm)
+            );
+            displayPlayers(filteredPlayers);
+        }
+
+        function confirmPlayerSelection() {
+            if (!selectedPlayer) return;
+            
+            const statusDiv = document.getElementById('selection-status');
+            statusDiv.innerHTML = `Selecting ${selectedPlayer.name}...`;
+            
+            document.getElementById('confirm-selection').disabled = true;
+            
+            const csrftoken = getCookie('csrftoken');
+            
+            fetch('/select_player_action/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({
+                    player_id: selectedPlayer.id,
+                    position: selectedPlayer.position
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                statusDiv.innerHTML = `${selectedPlayer.name} selected successfully! Redirecting...`;
+                
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 1000);
+            })
+            .catch(error => {
+                console.error('Error selecting player:', error);
+                statusDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                document.getElementById('confirm-selection').disabled = false;
+            });
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Event listeners
         document.getElementById('spin-button').addEventListener('click', spinWheel);
+        document.getElementById('player-search').addEventListener('input', filterPlayers);
+        document.getElementById('confirm-selection').addEventListener('click', confirmPlayerSelection);
+        
+        // Modal close functionality
+        document.querySelector('.close').addEventListener('click', function() {
+            document.getElementById('playerModal').style.display = 'none';
+            resetSpinButton();
+            selectedPlayer = null;
+            selectedTeam = null;
+        });
+        
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('playerModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+                resetSpinButton();
+                selectedPlayer = null;
+                selectedTeam = null;
+            }
+        });
+
+        function resetSpinButton() {
+            document.getElementById('spin-button').disabled = false;
+            // Ensure wheel animation properties are reset
+            if (theWheel && theWheel.animation) {
+                theWheel.animation.duration = 4;
+                theWheel.animation.spins = 8;
+                theWheel.animation.type = 'spinToStop';
+            }
+        }
+
+        // Update position when changed
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('position-select') && selectedPlayer) {
+                selectedPlayer.position = e.target.value;
+            }
+        });
     </script>
 </body>
 </html> 
