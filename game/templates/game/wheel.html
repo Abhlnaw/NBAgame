@@ -1,223 +1,272 @@
-{% load static %}
 {% load game_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All Time Random Wheel</title>
-    <script src="{% static 'game/js/TweenMax.min.js' %}" defer></script>
-    <script src="{% static 'game/js/Winwheel.min.js' %}" defer></script>
+    <title>NBA Team Wheel</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
-
         body {
-            font-family: 'Poppins', sans-serif;
-            text-align: center;
-            background-color: #f0f2f5;
-            color: #333;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             margin: 0;
             padding: 20px;
-        }
-
-        h1, h2, h3 {
-            color: #1a1a1a;
-        }
-        
-        .game-info {
-            margin-bottom: 20px;
-        }
-
-        .teams-display {
+            min-height: 100vh;
             display: flex;
-            justify-content: space-around;
-            margin-bottom: 30px;
-            width: 100%;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            text-align: center;
             max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
+            width: 100%;
         }
 
-        .team-panel {
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            width: 45%;
-        }
-        
-        .team-panel ul {
-            list-style: none;
-            padding: 0;
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
-        .wheel-wrapper {
-            position: relative;
-            width: 450px;
-            height: 450px;
-            margin: 20px auto;
+        .game-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
         }
 
-        .wheel-pointer {
-            position: absolute;
-            left: 50%;
-            top: -10px;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-top: 30px solid #c0392b;
-            z-index: 10;
-        }
-        
         .wheel-container {
-            position: absolute;
-            top: 0;
-            left: 0;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 30px;
+        }
+
+        #canvas {
+            border-radius: 50%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .spin-button {
-            margin-top: 20px;
-            padding: 15px 40px;
-            font-size: 1.2em;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
             color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3em;
             border-radius: 50px;
+            cursor: pointer;
+            margin: 20px;
+            transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .spin-button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
 
         .spin-button:disabled {
             background: #ccc;
             cursor: not-allowed;
-            box-shadow: none;
-        }
-        
-        .spin-button:not(:disabled):hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            transform: none;
         }
 
+        .teams-display {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .team {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            min-width: 200px;
+        }
+
+        .loading {
+            font-size: 1.2em;
+            color: #ffd700;
+        }
+
+        .error {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
-    <div class="game-info">
-        <h1>All Time Random Wheel</h1>
-        <h2>Player {{ game_state.current_player }}'s Turn (Turn {{ game_state.turn }})</h2>
-    </div>
-
-    <div class="teams-display">
-        {% for i in game_state.num_players|get_range %}
-        <div class="team-panel">
-            <h3>Player {{ i }}'s Team</h3>
-            <ul>
-                {% with team_key="player_"|add:i|add:"_team" %}
-                    {% for player in game_state|get_item:team_key %}
-                    <li>{{ player.name }} ({{ player.position }})</li>
-                    {% empty %}
-                    <li>No players drafted yet.</li>
-                    {% endfor %}
-                {% endwith %}
-            </ul>
+    <div class="container">
+        <h1>🏀 NBA Team Wheel</h1>
+        
+        <div class="game-info">
+            <h2>Player {{ game_state.current_player }}'s Turn (Draft Round {{ game_state.turn }})</h2>
+            <p>Spin the wheel to select a team, then choose a player!</p>
         </div>
-        {% endfor %}
-    </div>
 
-    <div class="wheel-wrapper">
-        <div class="wheel-pointer"></div>
         <div class="wheel-container">
-            <canvas id="canvas" width="450" height="450"></canvas>
+            <canvas id="canvas" width="500" height="500"></canvas>
+            <div id="wheel-message" class="loading">Loading teams...</div>
+            <button id="spin-button" class="spin-button" disabled>Spin the Wheel!</button>
+        </div>
+
+        <div class="teams-display">
+            {% for i in game_state.num_players|get_range %}
+            <div class="team">
+                <h3>Player {{ i }}'s Team</h3>
+                <ul style="text-align: left;">
+                    {% with team_key="player_"|add:i|add:"_team" %}
+                        {% for player in game_state|get_item:team_key %}
+                        <li>{{ player.name }} ({{ player.position }})</li>
+                        {% empty %}
+                        <li><em>No players drafted yet</em></li>
+                        {% endfor %}
+                    {% endwith %}
+                </ul>
+            </div>
+            {% endfor %}
         </div>
     </div>
-    
-    <button id="spin-button" class="spin-button" onclick="startSpin();" disabled>Spin the Wheel!</button>
+
+    <!-- Load JavaScript libraries from local static files -->
+    {% load static %}
+    <script src="{% static 'game/js/TweenMax.min.js' %}"></script>
+    <script src="{% static 'game/js/Winwheel.min.js' %}"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            let theWheel;
-            const spinButton = document.getElementById('spin-button');
+        let theWheel;
+        let teams = [];
 
-            fetch('/api/teams/')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Network response was not ok: ${response.statusText}`);
-                    }
-                    return response.json();
-                })
-                .then(teams => {
-                    if (!teams || teams.length === 0) {
-                        console.error('No teams were fetched from the API.');
-                        return;
-                    }
-                    const segments = teams.map(team => ({
-                        'fillStyle': getRandomColor(),
-                        'text': team.abbreviation,
-                        'textFillStyle': '#ffffff',
-                        'textFontSize': 14,
-                    }));
-                    
-                    theWheel = new Winwheel({
-                        'canvasId': 'canvas',
-                        'numSegments': segments.length,
-                        'outerRadius': 200,
-                        'innerRadius': 25,
-                        'textMargin': 0,
-                        'segments': segments,
-                        'animation': {
-                            'type': 'spinToStop',
-                            'duration': 8,
-                            'spins': 15,
-                            'callbackFinished': alertPrize
-                        }
-                    });
+        console.log('Starting wheel initialization...');
 
-                    console.log('Wheel created successfully:', theWheel);
-                    console.log('Number of segments:', segments.length);
-                    console.log('Available methods on theWheel:', Object.getOwnPropertyNames(theWheel));
-                    console.log('theWheel.startAnimation type:', typeof theWheel.startAnimation);
-                    spinButton.disabled = false;
-                    spinButton.textContent = 'Spin the Wheel!';
-                })
-                .catch(error => {
-                    console.error('Error fetching or initializing wheel:', error);
-                    const errorMsg = `Could not load wheel. Please ensure you are using http:// and not https://. Check console for details.`;
-                    spinButton.textContent = 'Error: Could not load wheel';
-                    alert(errorMsg + '\\n\\n' + error);
-                });
-            
-            window.startSpin = function() {
-                console.log('startSpin called, theWheel:', theWheel);
-                if (theWheel) {
-                    console.log('Starting wheel animation...');
-                    spinButton.disabled = true;
-                    spinButton.textContent = 'Spinning...';
-                    theWheel.startAnimation();
-                } else {
-                    console.error('theWheel is not defined!');
-                    alert('Wheel not loaded properly. Please refresh the page.');
-                }
-            }
-
-            window.alertPrize = function(indicatedSegment) {
-                console.log('Wheel stopped on:', indicatedSegment);
-                const teamAbbr = indicatedSegment.text;
-                spinButton.textContent = `Selected: ${teamAbbr}`;
+        // Fetch teams from API
+        fetch('/api/teams/')
+            .then(response => {
+                console.log('Teams API response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Teams data received:', data);
+                teams = data;
                 
-                // Give a moment to see the result before redirecting
-                setTimeout(() => {
-                    window.location.href = `/select_player/${teamAbbr}/`;
-                }, 1500);
+                if (teams.length === 0) {
+                    throw new Error('No teams received from API');
+                }
+                
+                initializeWheel();
+            })
+            .catch(error => {
+                console.error('Error fetching teams:', error);
+                document.getElementById('wheel-message').innerHTML = 
+                    '<div class="error">Error loading teams: ' + error.message + '</div>';
+            });
+
+        function initializeWheel() {
+            console.log('Initializing wheel with', teams.length, 'teams');
+            
+            // Prepare segments for the wheel
+            const segments = teams.map((team, index) => ({
+                'fillStyle': getTeamColor(index),
+                'text': team.abbreviation,
+                'textFillStyle': '#ffffff',
+                'textFontSize': 14
+            }));
+
+            console.log('Wheel segments prepared:', segments.length);
+
+            try {
+                // Check if Winwheel is available
+                if (typeof Winwheel === 'undefined') {
+                    throw new Error('Winwheel library not loaded');
+                }
+
+                theWheel = new Winwheel({
+                    'canvasId': 'canvas',
+                    'numSegments': teams.length,
+                    'segments': segments,
+                    'animation': {
+                        'type': 'spinToStop',
+                        'duration': 3,
+                        'spins': 8,
+                        'callbackFinished': onWheelStop
+                    }
+                });
+
+                console.log('Wheel created successfully');
+                console.log('Wheel object type:', typeof theWheel);
+                console.log('Available methods:', Object.getOwnPropertyNames(theWheel));
+                console.log('startAnimation method type:', typeof theWheel.startAnimation);
+
+                document.getElementById('wheel-message').style.display = 'none';
+                document.getElementById('spin-button').disabled = false;
+                
+            } catch (error) {
+                console.error('Error creating wheel:', error);
+                document.getElementById('wheel-message').innerHTML = 
+                    '<div class="error">Error creating wheel: ' + error.message + '</div>';
+            }
+        }
+
+        function getTeamColor(index) {
+            const colors = [
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', 
+                '#FF9FF3', '#54A0FF', '#5F27CD', '#00D2D3', '#FF9F43',
+                '#10AC84', '#EE5A24', '#0984E3', '#6C5CE7', '#A29BFE',
+                '#FD79A8', '#FDCB6E', '#6C5CE7', '#74B9FF', '#81ECEC',
+                '#FAB1A0', '#FF7675', '#FD79A8', '#E17055', '#00B894',
+                '#00CEC9', '#0984E3', '#6C5CE7', '#A29BFE', '#DDD'
+            ];
+            return colors[index % colors.length];
+        }
+
+        function spinWheel() {
+            console.log('Starting wheel animation...');
+            
+            if (!theWheel) {
+                console.error('Wheel not initialized');
+                return;
             }
 
-            function getRandomColor() {
-                const colors = ['#f94144', '#f3722c', '#f8961e', '#f9c74f', '#90be6d', '#43aa8b', '#577590'];
-                return colors[Math.floor(Math.random() * colors.length)];
+            if (typeof theWheel.startAnimation !== 'function') {
+                console.error('startAnimation is not a function:', typeof theWheel.startAnimation);
+                console.log('Wheel object:', theWheel);
+                return;
             }
-        });
+
+            document.getElementById('spin-button').disabled = true;
+            theWheel.startAnimation();
+        }
+
+        function onWheelStop(indicatedSegment) {
+            console.log('Wheel stopped on segment:', indicatedSegment);
+            console.log('Segment text:', indicatedSegment.text);
+            
+            // Find team by abbreviation (segment text is the abbreviation)
+            const selectedTeam = teams.find(team => team.abbreviation === indicatedSegment.text);
+            console.log('Selected team:', selectedTeam);
+            
+            if (selectedTeam) {
+                const teamAbbr = selectedTeam.abbreviation;
+                console.log('Redirecting to player selection for team:', teamAbbr);
+                window.location.href = `/select_player/${teamAbbr}/`;
+            } else {
+                console.error('Could not find team for segment:', indicatedSegment);
+                console.error('Available teams:', teams.map(t => t.abbreviation));
+            }
+        }
+
+        // Attach spin function to button
+        document.getElementById('spin-button').addEventListener('click', spinWheel);
     </script>
 </body>
 </html> 

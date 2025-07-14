@@ -1,0 +1,246 @@
+{% load game_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Over - NBA Draft Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .winner-announcement {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #333;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            font-size: 1.5em;
+            font-weight: bold;
+            box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3); }
+            to { box-shadow: 0 12px 40px rgba(255, 215, 0, 0.6); }
+        }
+
+        .teams-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .team {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            min-width: 250px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .team.winner {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+            transform: scale(1.05);
+        }
+
+        .team h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .team ul {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+        }
+
+        .team li {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .score {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .play-again-button, .home-button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .play-again-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+
+        .home-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .play-again-button:hover, .home-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .stats-summary {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏆 Game Over!</h1>
+
+        <div class="winner-announcement">
+            🎉 Player {{ winner }} Wins! 🎉
+        </div>
+
+        <div class="stats-summary">
+            <h3>Draft Summary</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">{{ game_state.num_players }}</div>
+                    <div class="stat-label">Players</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ game_state.turn|add:"-1" }}</div>
+                    <div class="stat-label">Rounds</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{% widthratio game_state.num_players 1 5 %}</div>
+                    <div class="stat-label">Total Picks</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="teams-container">
+            {% for i in game_state.num_players|get_range %}
+            <div class="team {% if i == winner %}winner{% endif %}">
+                <h2>
+                    Player {{ i }}'s Team 
+                    {% if i == winner %}👑{% endif %}
+                </h2>
+                <div class="score">
+                    Score: {{ game_state|get_item:"team_"|add:i|add:"_score" }}
+                </div>
+                <ul>
+                    {% with team_key="player_"|add:i|add:"_team" %}
+                        {% for player in game_state|get_item:team_key %}
+                        <li>
+                            <strong>{{ player.name }}</strong> ({{ player.position }})
+                        </li>
+                        {% empty %}
+                        <li><em>No players drafted</em></li>
+                        {% endfor %}
+                    {% endwith %}
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="controls">
+            <a href="{% url 'main_menu' %}" class="play-again-button">🔄 Play Again</a>
+            <a href="{% url 'main_menu' %}" class="home-button">🏠 Home</a>
+        </div>
+    </div>
+
+    <script>
+        // Add some celebration effects
+        console.log('Game Over! Winner: Player {{ winner }}');
+        
+        // Simple confetti effect simulation with console celebration
+        setTimeout(() => {
+            console.log('🎉🎊🏆 CONGRATULATIONS PLAYER {{ winner }}! 🏆🎊🎉');
+        }, 1000);
+
+        // Auto-scroll to show all teams if needed
+        if (window.innerHeight < document.body.scrollHeight) {
+            setTimeout(() => {
+                window.scrollTo({
+                    top: document.querySelector('.teams-container').offsetTop - 50,
+                    behavior: 'smooth'
+                });
+            }, 2000);
+        }
+    </script>
+</body>
+</html> 
