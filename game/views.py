@@ -9,6 +9,11 @@ from .serializers import TeamSerializer, PlayerSerializer, TeamNameSerializer
 
 logger = logging.getLogger(__name__)
 
+def debug_session(request):
+    """Debug view to show current session state."""
+    game_state = request.session.get('game_state', {})
+    return JsonResponse(game_state, json_dumps_params={'indent': 2})
+
 def main_menu(request):
     """Display the main menu with player selection options."""
     return render(request, 'game/index.html')
@@ -33,8 +38,13 @@ def new_game_view(request):
 def wheel_view(request):
     """Display the wheel for team selection."""
     game_state = request.session.get('game_state')
+    logger.debug(f"Wheel view - Session key: {request.session.session_key}")
+    logger.debug(f"Wheel view - Game state: {game_state}")
+    
     if not game_state:
+        logger.debug("No game state found, redirecting to new_game")
         return redirect('new_game')
+    
     return render(request, 'game/wheel.html', {'game_state': game_state})
 
 def player_selection_view(request, team_abbr):
@@ -89,6 +99,9 @@ def select_player_action_view(request):
         }
         
         game_state[current_player_team_key].append(player_data)
+        
+        logger.debug(f"Updated game state: {game_state}")
+        logger.debug(f"Team for player {game_state['current_player']}: {game_state[current_player_team_key]}")
 
         # Update turn logic
         if game_state['current_player'] < game_state['num_players']:
@@ -98,10 +111,18 @@ def select_player_action_view(request):
             game_state['current_player'] = 1
             game_state['turn'] += 1
         
-        # Save updated game state
+        logger.debug(f"After turn logic - Current player: {game_state['current_player']}, Turn: {game_state['turn']}")
+        
+        # Save updated game state with explicit session handling
         request.session['game_state'] = game_state
         request.session.modified = True
         request.session.save()
+        
+        logger.debug("Session saved successfully")
+        
+        # Double-check the session was saved
+        saved_state = request.session.get('game_state', {})
+        logger.debug(f"Verified saved state: {saved_state}")
         
         # Check if all players have drafted 5 players (game over)
         if game_state['turn'] > 5:

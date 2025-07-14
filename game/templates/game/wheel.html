@@ -561,14 +561,17 @@
             document.getElementById('selection-status').innerHTML = '';
             selectedPlayer = null;
             
-            // Fetch players for this team using the team's abbreviation
-            fetch(`/api/teams/`)
-                .then(response => response.json())
+            // Fetch players for this specific team using the team's ID
+            fetch(`/api/teams/${team.id}/`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    // Find the full team data including players
-                    const fullTeam = data.find(t => t.abbreviation === team.abbreviation);
-                    if (fullTeam && fullTeam.players) {
-                        allPlayers = fullTeam.players;
+                    if (data.players && data.players.length > 0) {
+                        allPlayers = data.players;
                         displayPlayers(allPlayers);
                     } else {
                         throw new Error('No players found for this team');
