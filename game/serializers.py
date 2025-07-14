@@ -6,6 +6,11 @@ class PlayerSerializer(serializers.ModelSerializer):
         model = Player
         fields = ['id', 'name']
 
+class TeamNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Team
+        fields = ['abbreviation', 'name']
+
 class TeamSerializer(serializers.ModelSerializer):
     players = PlayerSerializer(many=True, read_only=True)
 
