@@ -3,40 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBA 2k Stat Game</title>
+    <title>NBA Draft Game</title>
     <style>
-        body { font-family: sans-serif; text-align: center; margin-top: 100px; }
-        h1 { color: #333; }
-        .new-game-form {
-            margin-top: 20px;
-        }
-        .player-select {
-            padding: 10px;
-            font-size: 1em;
-            margin-right: 10px;
-        }
-        .menu-button {
-            padding: 15px 30px;
-            font-size: 1.2em;
-            cursor: pointer;
-            border: none;
-            background-color: #007bff;
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-radius: 5px;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-group {
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .radio-option {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .radio-option:hover,
+        .radio-option.selected {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .radio-option input[type="radio"] {
+            margin-right: 8px;
+        }
+
+        .start-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3em;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .start-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
     </style>
 </head>
 <body>
-    <h1>NBA 2k Stat Game</h1>
-    <form action="/new_game/" method="post" class="new-game-form">
-        {% csrf_token %}
-        <label for="num_players">Number of Players:</label>
-        <select name="num_players" id="num_players" class="player-select">
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-        </select>
-        <button type="submit" class="menu-button">Start New Game</button>
-    </form>
+    <div class="container">
+        <h1>🏀 NBA Draft Game</h1>
+        
+        <form method="post" action="{% url 'new_game' %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="num_players">Number of Players:</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="players_2" name="num_players" value="2" checked>
+                        <label for="players_2">2 Players</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="players_3" name="num_players" value="3">
+                        <label for="players_3">3 Players</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="players_4" name="num_players" value="4">
+                        <label for="players_4">4 Players</label>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="start-button">Start Game</button>
+        </form>
+    </div>
+
+    <script>
+        // Add interactivity to radio buttons
+        document.querySelectorAll('.radio-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                
+                // Update visual selection
+                document.querySelectorAll('.radio-option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        // Set initial selected state
+        document.querySelector('input[type="radio"]:checked').closest('.radio-option').classList.add('selected');
+    </script>
 </body>
 </html> 
