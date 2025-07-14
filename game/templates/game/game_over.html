@@ -186,7 +186,7 @@
                     <div class="stat-label">Rounds</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">{% widthratio game_state.num_players 1 5 %}</div>
+                    <div class="stat-value">{{ game_state.num_players|multiply:5 }}</div>
                     <div class="stat-label">Total Picks</div>
                 </div>
             </div>
@@ -200,7 +200,7 @@
                     {% if i == winner %}👑{% endif %}
                 </h2>
                 <div class="score">
-                    Score: {{ game_state|get_item:"team_"|add:i|add:"_score" }}
+                    Score: {{ team_scores|get_item:i|floatformat:2 }}
                 </div>
                 <ul>
                     {% with team_key="player_"|add:i|add:"_team" %}

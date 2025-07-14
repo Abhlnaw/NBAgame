@@ -13,6 +13,7 @@ class Player(models.Model):
     player_id = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=255)
     teams = models.ManyToManyField(Team, related_name='players')
+    position = models.CharField(max_length=10, blank=True, null=True)
 
     def __str__(self):
         return self.name
