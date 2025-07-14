@@ -9,7 +9,7 @@ class PlayerSerializer(serializers.ModelSerializer):
 class TeamNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
-        fields = ['abbreviation', 'name']
+        fields = ['id', 'abbreviation', 'name']
 
 class TeamSerializer(serializers.ModelSerializer):
     players = PlayerSerializer(many=True, read_only=True)
