@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Time Random Wheel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/winwheel.js@2.8.0/Winwheel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1, h2, h3 {
+            color: #1a1a1a;
+        }
+        
+        .game-info {
+            margin-bottom: 20px;
+        }
+
+        .teams-display {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .team-panel {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 45%;
+        }
+        
+        .team-panel ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .wheel-wrapper {
+            position: relative;
+            width: 450px;
+            height: 450px;
+            margin: 20px auto;
+        }
+
+        .wheel-pointer {
+            position: absolute;
+            left: 50%;
+            top: -10px;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 30px solid #c0392b;
+            z-index: 10;
+        }
+        
+        .wheel-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .spin-button {
+            margin-top: 20px;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .spin-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
+        .spin-button:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="game-info">
+        <h1>All Time Random Wheel</h1>
+        <h2>Player {{ game_state.current_player }}'s Turn (Turn {{ game_state.turn }})</h2>
+    </div>
+
+    <div class="teams-display">
+        <div class="team-panel">
+            <h3>Player 1's Team</h3>
+            <ul>
+                {% for player in game_state.player_1_team %}
+                <li>{{ player.name }} ({{ player.position }})</li>
+                {% empty %}
+                <li>No players drafted yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="team-panel">
+            <h3>Player 2's Team</h3>
+            <ul>
+                {% for player in game_state.player_2_team %}
+                <li>{{ player.name }} ({{ player.position }})</li>
+                {% empty %}
+                <li>No players drafted yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="wheel-wrapper">
+        <div class="wheel-pointer"></div>
+        <div class="wheel-container">
+            <canvas id="canvas" width="450" height="450"></canvas>
+        </div>
+    </div>
+    
+    <button id="spin-button" class="spin-button" onclick="startSpin();" disabled>Spin the Wheel!</button>
+
+    <script>
+        let theWheel;
+        const spinButton = document.getElementById('spin-button');
+
+        window.onload = function() {
+            fetch('/api/teams/')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(teams => {
+                    if (teams.length === 0) {
+                        return;
+                    }
+                    const segments = teams.map(team => ({
+                        'fillStyle': getRandomColor(),
+                        'text': team.abbreviation,
+                        'textFillStyle': '#ffffff',
+                        'textFontSize': 14,
+                    }));
+                    
+                    theWheel = new Winwheel({
+                        'canvasId': 'canvas',
+                        'numSegments': segments.length,
+                        'outerRadius': 200,
+                        'innerRadius': 25,
+                        'textMargin': 0,
+                        'segments': segments,
+                        'animation': {
+                            'type': 'spinToStop',
+                            'duration': 8,
+                            'spins': 15,
+                            'callbackFinished': alertPrize
+                        }
+                    });
+
+                    spinButton.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error fetching teams:', error);
+                });
+        };
+        
+        function startSpin() {
+            if (theWheel) {
+                spinButton.disabled = true;
+                theWheel.startAnimation();
+            }
+        }
+
+        function alertPrize(indicatedSegment) {
+            const teamAbbr = indicatedSegment.text;
+            window.location.href = `/select_player/${teamAbbr}/`;
+        }
+
+        function getRandomColor() {
+            const colors = ['#f94144', '#f3722c', '#f8961e', '#f9c74f', '#90be6d', '#43aa8b', '#577590'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+    </script>
+</body>
+</html> 
