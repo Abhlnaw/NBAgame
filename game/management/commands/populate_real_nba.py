@@ -110,11 +110,43 @@ class Command(BaseCommand):
                 
                 players_created = 0
                 for player_data in players_data:
-                    if self.create_player_from_totals(player_data, season):
-                        players_created += 1
-                
-                self.stdout.write(f'  Page {page}: Created {players_created} players')
-                
+                    player_id = player_data.get('playerId') or player_data.get('player_id')
+                    player_name = player_data.get('playerName') or player_data.get('player_name')
+                    team_abbr = player_data.get('team')
+                    position = player_data.get('pos') or player_data.get('position')
+
+                    if not all([player_id, player_name, team_abbr]):
+                        continue
+                    
+                    # Skip invalid team abbreviations
+                    if len(team_abbr) != 3 or team_abbr in ['TOT', '2TM', '3TM']:
+                        continue
+                    
+                    try:
+                        team = Team.objects.get(abbreviation=team_abbr)
+                        player, created = Player.objects.get_or_create(
+                            player_id=player_id,
+                            defaults={
+                                'name': player_name,
+                                'position': position # Save position
+                            }
+                        )
+
+                        if not created and position and player.position != position:
+                            player.position = position
+                            player.save()
+                            
+                        player.teams.add(team)
+                        if created:
+                            self.stdout.write(f"  - Created player: {player_name} ({position})")
+                        else:
+                            # Optional: log updates for existing players
+                            # self.stdout.write(f"  - Updated player: {player_name}")
+                            pass
+
+                    except Team.DoesNotExist:
+                        self.stderr.write(self.style.WARNING(f"  - Team with abbreviation {team_abbr} not found for player {player_name}"))
+
                 # Check if we've reached the last page
                 pagination = data.get('pagination', {})
                 if page >= pagination.get('pages', 1):

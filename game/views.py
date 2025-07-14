@@ -45,7 +45,23 @@ def wheel_view(request):
         logger.debug("No game state found, redirecting to new_game")
         return redirect('new_game')
     
-    return render(request, 'game/wheel.html', {'game_state': game_state})
+    # Prepare data for the template to avoid complex logic in the template
+    teams_display_data = []
+    if game_state:
+        for i in range(1, game_state.get('num_players', 0) + 1):
+            team_key = f"player_{i}_team"
+            teams_display_data.append({
+                'player_num': i,
+                'is_current': i == game_state.get('current_player'),
+                'roster': game_state.get(team_key, [])
+            })
+
+    context = {
+        'game_state': game_state,
+        'teams_display_data': teams_display_data
+    }
+    
+    return render(request, 'game/wheel.html', context)
 
 def player_selection_view(request, team_abbr):
     """Display available players from the selected team."""
@@ -193,15 +209,15 @@ def game_over_view(request):
     
     winner, team_scores = calculate_winner(game_state)
 
-    # Add scores to the game_state for template display
-    for player_num, score in team_scores.items():
-        game_state[f'team_{player_num}_score'] = round(score, 2)
-
     context = {
         'game_state': game_state,
         'winner': winner,
+        'team_scores': team_scores,
     }
     
+    # Clear the session after the game is over
+    # request.session.flush()
+
     return render(request, 'game/game_over.html', context)
 
 # API ViewSets

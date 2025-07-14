@@ -310,6 +310,7 @@
 </head>
 <body>
     <div class="container">
+        {% csrf_token %}
         <h1>🏀 NBA Team Wheel</h1>
         
         <div class="game-info">
@@ -334,17 +335,15 @@
         </div>
 
         <div class="teams-display">
-            {% for i in game_state.num_players|get_range %}
-            <div class="team {% if i == game_state.current_player %}current-player{% endif %}">
-                <h3>Player {{ i }}'s Team {% if i == game_state.current_player %}(Current){% endif %}</h3>
+            {% for team in teams_display_data %}
+            <div class="team {% if team.is_current %}current-player{% endif %}">
+                <h3>Player {{ team.player_num }}'s Team {% if team.is_current %}(Current){% endif %}</h3>
                 <ul style="text-align: left;">
-                    {% with team_key="player_"|add:i|add:"_team" %}
-                        {% for player in game_state|get_item:team_key %}
-                        <li>{{ player.name }} ({{ player.position }})</li>
-                        {% empty %}
-                        <li><em>No players drafted yet</em></li>
-                        {% endfor %}
-                    {% endwith %}
+                    {% for player in team.roster %}
+                    <li>{{ player.name }} ({{ player.position }})</li>
+                    {% empty %}
+                    <li><em>No players drafted yet</em></li>
+                    {% endfor %}
                 </ul>
             </div>
             {% endfor %}
@@ -594,7 +593,10 @@
             
             grid.innerHTML = players.map(player => `
                 <div class="player-card" data-player-id="${player.id}" data-player-name="${player.name}">
-                    <div class="player-name">${player.name}</div>
+                    <div class="player-name">
+                        ${player.name}
+                        ${player.position ? `<em>(${player.position})</em>` : ''}
+                    </div>
                     <div class="position-selector">
                         <select class="position-select">
                             <option value="PG">Point Guard (PG)</option>
