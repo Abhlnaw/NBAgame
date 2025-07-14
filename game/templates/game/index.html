@@ -7,6 +7,14 @@
     <style>
         body { font-family: sans-serif; text-align: center; margin-top: 100px; }
         h1 { color: #333; }
+        .new-game-form {
+            margin-top: 20px;
+        }
+        .player-select {
+            padding: 10px;
+            font-size: 1em;
+            margin-right: 10px;
+        }
         .menu-button {
             padding: 15px 30px;
             font-size: 1.2em;
@@ -20,6 +28,15 @@
 </head>
 <body>
     <h1>NBA 2k Stat Game</h1>
-    <button class="menu-button" onclick="location.href='/new_game/'">New Game</button>
+    <form action="/new_game/" method="post" class="new-game-form">
+        {% csrf_token %}
+        <label for="num_players">Number of Players:</label>
+        <select name="num_players" id="num_players" class="player-select">
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+        </select>
+        <button type="submit" class="menu-button">Start New Game</button>
+    </form>
 </body>
 </html> 
