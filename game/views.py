@@ -9,10 +9,61 @@ from .serializers import TeamSerializer, PlayerSerializer, TeamNameSerializer
 
 logger = logging.getLogger(__name__)
 
-def debug_session(request):
-    """Debug view to show current session state."""
-    game_state = request.session.get('game_state', {})
-    return JsonResponse(game_state, json_dumps_params={'indent': 2})
+# Game State Utility Functions
+def get_teams_display_data(game_state):
+    """Generate teams display data for templates."""
+    teams_data = []
+    if game_state:
+        for i in range(1, game_state.get('num_players', 0) + 1):
+            team_key = f"player_{i}_team"
+            teams_data.append({
+                'player_num': i,
+                'is_current': i == game_state.get('current_player'),
+                'roster': game_state.get(team_key, [])
+            })
+    return teams_data
+
+def get_all_drafted_player_ids(game_state):
+    """Get set of all drafted player IDs across all teams."""
+    drafted_ids = set()
+    for i in range(1, game_state.get('num_players', 0) + 1):
+        roster = game_state.get(f"player_{i}_team", [])
+        for player_data in roster:
+            if player_data and 'id' in player_data:
+                drafted_ids.add(player_data['id'])
+    return drafted_ids
+
+def validate_player_selection(game_state, player_id, position):
+    """Validate if a player can be drafted in the given position."""
+    current_player_team_key = f"player_{game_state['current_player']}_team"
+    
+    # Check for duplicate positions
+    existing_positions = [p.get('position', '').upper() for p in game_state.get(current_player_team_key, [])]
+    if position.upper() in existing_positions:
+        return False, f"You already drafted a {position}. Choose a different position."
+
+    # Check for duplicate players
+    for i in range(1, game_state['num_players'] + 1):
+        team_key = f"player_{i}_team"
+        for drafted_player in game_state.get(team_key, []):
+            if drafted_player.get('id') == player_id:
+                try:
+                    player = Player.objects.get(id=player_id)
+                    return False, f"{player.name} has already been drafted by another team."
+                except Player.DoesNotExist:
+                    return False, "Player not found."
+    
+    return True, ""
+
+def advance_turn(game_state):
+    """Advance to the next player/turn."""
+    if game_state['current_player'] < game_state['num_players']:
+        game_state['current_player'] += 1
+    else:
+        game_state['current_player'] = 1
+        game_state['turn'] += 1
+
+
 
 def main_menu(request):
     """Display the main menu with player selection options."""
@@ -38,50 +89,18 @@ def new_game_view(request):
 def wheel_view(request):
     """Display the wheel for team selection."""
     game_state = request.session.get('game_state')
-    logger.debug(f"Wheel view - Session key: {request.session.session_key}")
-    logger.debug(f"Wheel view - Game state: {game_state}")
     
     if not game_state:
-        logger.debug("No game state found, redirecting to new_game")
         return redirect('new_game')
-    
-    # Prepare data for the template to avoid complex logic in the template
-    teams_display_data = []
-    if game_state:
-        for i in range(1, game_state.get('num_players', 0) + 1):
-            team_key = f"player_{i}_team"
-            teams_display_data.append({
-                'player_num': i,
-                'is_current': i == game_state.get('current_player'),
-                'roster': game_state.get(team_key, [])
-            })
 
     context = {
         'game_state': game_state,
-        'teams_display_data': teams_display_data
+        'teams_display_data': get_teams_display_data(game_state)
     }
     
     return render(request, 'game/wheel.html', context)
 
-def player_selection_view(request, team_abbr):
-    """Display available players from the selected team."""
-    game_state = request.session.get('game_state')
-    if not game_state:
-        return redirect('new_game')
-    
-    try:
-        team = Team.objects.get(abbreviation=team_abbr)
-        players = team.players.all()
-    except Team.DoesNotExist:
-        # Redirect back to wheel if team doesn't exist
-        return redirect('wheel')
-    
-    context = {
-        'team': team,
-        'players': players,
-        'game_state': game_state
-    }
-    return render(request, 'game/select_player.html', context)
+
 
 @require_POST
 def select_player_action_view(request):
@@ -98,49 +117,33 @@ def select_player_action_view(request):
         if not player_id or not position:
             return JsonResponse({'error': 'Missing player_id or position'}, status=400)
 
-        player = Player.objects.get(id=player_id)
-        logger.debug(f"Player selected: {player.name} ({position}) by Player {game_state['current_player']}")
+        # Validate player selection
+        is_valid, error_message = validate_player_selection(game_state, player_id, position)
+        if not is_valid:
+            return JsonResponse({'error': error_message}, status=400)
 
-        # Add player to the current player's team
-        current_player_team_key = f"player_{game_state['current_player']}_team"
-        
-        # Ensure the team list exists
-        if current_player_team_key not in game_state:
-            game_state[current_player_team_key] = []
-        
+        # Get player and create player data
+        player = Player.objects.get(id=player_id)
         player_data = {
             'id': player.id,
             'name': player.name,
             'position': position
         }
         
+        # Add player to current player's team
+        current_player_team_key = f"player_{game_state['current_player']}_team"
+        if current_player_team_key not in game_state:
+            game_state[current_player_team_key] = []
         game_state[current_player_team_key].append(player_data)
         
-        logger.debug(f"Updated game state: {game_state}")
-        logger.debug(f"Team for player {game_state['current_player']}: {game_state[current_player_team_key]}")
-
-        # Update turn logic
-        if game_state['current_player'] < game_state['num_players']:
-            game_state['current_player'] += 1
-        else:
-            # End of a turn, reset to player 1 and advance turn
-            game_state['current_player'] = 1
-            game_state['turn'] += 1
+        # Advance turn
+        advance_turn(game_state)
         
-        logger.debug(f"After turn logic - Current player: {game_state['current_player']}, Turn: {game_state['turn']}")
-        
-        # Save updated game state with explicit session handling
+        # Save session
         request.session['game_state'] = game_state
         request.session.modified = True
-        request.session.save()
         
-        logger.debug("Session saved successfully")
-        
-        # Double-check the session was saved
-        saved_state = request.session.get('game_state', {})
-        logger.debug(f"Verified saved state: {saved_state}")
-        
-        # Check if all players have drafted 5 players (game over)
+        # Check if game is over
         if game_state['turn'] > 5:
             return JsonResponse({'redirect_url': '/game_over/'})
 
@@ -151,7 +154,7 @@ def select_player_action_view(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON data'}, status=400)
     except Exception as e:
-        logger.error(f"Error in select_player_action_view: {e}")
+        logger.error(f"Error selecting player: {e}")
         return JsonResponse({'error': 'Server error occurred'}, status=500)
 
 def calculate_winner(game_state):
@@ -209,15 +212,19 @@ def game_over_view(request):
     
     winner, team_scores = calculate_winner(game_state)
 
+    # Enhance teams display data with scores and winner status
+    teams_display_data = get_teams_display_data(game_state)
+    for team_data in teams_display_data:
+        player_num = team_data['player_num']
+        team_data['score'] = round(team_scores.get(player_num, 0), 2)
+        team_data['is_winner'] = player_num == winner
+
     context = {
         'game_state': game_state,
         'winner': winner,
-        'team_scores': team_scores,
+        'teams_display_data': teams_display_data,
     }
     
-    # Clear the session after the game is over
-    # request.session.flush()
-
     return render(request, 'game/game_over.html', context)
 
 # API ViewSets

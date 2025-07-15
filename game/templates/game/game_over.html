@@ -193,25 +193,20 @@
         </div>
 
         <div class="teams-container">
-            {% for i in game_state.num_players|get_range %}
-            <div class="team {% if i == winner %}winner{% endif %}">
+            {% for team in teams_display_data %}
+            <div class="team {% if team.is_winner %}winner{% endif %}">
                 <h2>
-                    Player {{ i }}'s Team 
-                    {% if i == winner %}👑{% endif %}
+                    Player {{ team.player_num }}'s Team {% if team.is_winner %}👑{% endif %}
                 </h2>
                 <div class="score">
-                    Score: {{ team_scores|get_item:i|floatformat:2 }}
+                    Score: {{ team.score }}
                 </div>
                 <ul>
-                    {% with team_key="player_"|add:i|add:"_team" %}
-                        {% for player in game_state|get_item:team_key %}
-                        <li>
-                            <strong>{{ player.name }}</strong> ({{ player.position }})
-                        </li>
-                        {% empty %}
-                        <li><em>No players drafted</em></li>
-                        {% endfor %}
-                    {% endwith %}
+                    {% for player in team.roster %}
+                    <li><strong>{{ player.name }}</strong> ({{ player.position }})</li>
+                    {% empty %}
+                    <li><em>No players drafted</em></li>
+                    {% endfor %}
                 </ul>
             </div>
             {% endfor %}
