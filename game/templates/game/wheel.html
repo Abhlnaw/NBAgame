@@ -62,12 +62,15 @@
             display: inline-block;
             padding: 40px;
             border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
         }
 
         .team-indicator {
             background: rgba(255, 140, 0, 0.9);
             color: white;
-            padding: 8px 20px;
+            padding: 8px 16px;
             border-radius: 20px;
             font-weight: bold;
             margin-bottom: 15px;
@@ -76,11 +79,14 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .wheel-pointer {
             position: absolute;
-            top: 10px;
+            top: -15px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
@@ -158,8 +164,8 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
+            background-color: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(15px);
         }
 
         .modal-content {
@@ -227,6 +233,12 @@
 
         .modal-sidebar {
             flex: 0 0 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: sticky;
+            top: 0;
+            align-self: flex-start;
         }
 
         .modal-main {
@@ -239,8 +251,10 @@
             padding: 15px;
             border-radius: 10px;
             text-align: center;
-            position: sticky;
-            top: 0;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
         }
 
         .current-roster-sidebar h4 {
@@ -286,9 +300,9 @@
         }
 
         .player-card.selected {
-            background: white;
-            color: #333;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            border-color: #ffd700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+            background: rgba(255, 215, 0, 0.1);
         }
 
         .player-name {
@@ -313,7 +327,7 @@
             background: linear-gradient(45deg, #ff6b6b, #ee5a24);
             color: white;
             width: 100%;
-            margin-top: 20px;
+            flex-shrink: 0;
         }
 
         /* Utility Classes */
@@ -350,10 +364,20 @@
             .modal-sidebar {
                 flex: none;
                 order: -1;
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 15px;
             }
             
             .current-roster-sidebar {
-                position: static;
+                flex: 1;
+                min-height: auto;
+            }
+            
+            .select-player-btn {
+                margin-top: 0;
+                align-self: flex-end;
+                min-width: 150px;
             }
         }
     </style>
@@ -408,6 +432,8 @@
                     <div id="current-roster-display" class="current-roster-sidebar">
                         <!-- Current roster will be populated here -->
                     </div>
+                    <button id="confirm-selection" class="btn select-player-btn" disabled>Select Player</button>
+                    <div id="selection-status" style="text-align: center; margin-top: 15px;"></div>
                 </div>
                 
                 <div class="modal-main">
@@ -418,9 +444,6 @@
                     <div id="players-grid" class="players-grid">
                         <div class="no-players">Loading players...</div>
                     </div>
-                    
-                    <button id="confirm-selection" class="btn select-player-btn" disabled>Select Player</button>
-                    <div id="selection-status" style="text-align: center; margin-top: 15px;"></div>
                 </div>
             </div>
         </div>
@@ -453,7 +476,10 @@
             });
 
         function initializeWheel() {
-            const segments = teams.map((team, index) => ({
+            // Randomize team order for the wheel
+            const shuffledTeams = [...teams].sort(() => Math.random() - 0.5);
+            
+            const segments = shuffledTeams.map((team, index) => ({
                 'fillStyle': getTeamColor(index),
                 'text': team.abbreviation,
                 'textFillStyle': '#ffffff',
@@ -467,7 +493,7 @@
 
                 theWheel = new Winwheel({
                     'canvasId': 'canvas',
-                    'numSegments': teams.length,
+                    'numSegments': shuffledTeams.length,
                     'segments': segments,
                     'animation': {
                         'type': 'spinToStop',
@@ -476,6 +502,9 @@
                         'callbackFinished': onWheelStop
                     }
                 });
+                
+                // Store shuffled teams reference for later use
+                window.wheelTeams = shuffledTeams;
 
                 document.getElementById('wheel-message').style.display = 'none';
                 document.getElementById('spin-button').disabled = false;
@@ -489,13 +518,23 @@
         }
 
         function getTeamColor(index) {
+            // Beautiful, cohesive color palette inspired by modern design
             const colors = [
-                '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57',
-                '#FF9FF3', '#54A0FF', '#5F27CD', '#00D2D3', '#FF9F43',
-                '#686DE0', '#4834D4', '#130F40', '#30336B', '#6C5CE7',
-                '#A29BFE', '#FD79A8', '#E84393', '#2D3436', '#636E72',
-                '#B2BEC3', '#DDD6FE', '#3B82F6', '#EF4444', '#10B981',
-                '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'
+                '#FF6B6B', // Coral Red
+                '#4ECDC4', // Turquoise
+                '#45B7D1', // Sky Blue
+                '#96CEB4', // Mint Green
+                '#FECA57', // Golden Yellow
+                '#FF9FF3', // Pink
+                '#A8E6CF', // Light Green
+                '#FFD93D', // Bright Yellow
+                '#6C5CE7', // Purple
+                '#FD79A8', // Rose
+                '#74B9FF', // Light Blue
+                '#FDCB6E', // Peach
+                '#81ECEC', // Cyan
+                '#E17055', // Terra Cotta
+                '#00B894'  // Emerald
             ];
             return colors[index % colors.length];
         }
@@ -503,7 +542,7 @@
         function updateArrowIndicator() {
             if (!theWheel) return;
             const segmentIndex = theWheel.getIndicatedSegment().text;
-            const team = teams.find(t => t.abbreviation === segmentIndex);
+            const team = (window.wheelTeams || teams).find(t => t.abbreviation === segmentIndex);
             document.getElementById('team-indicator').textContent = team ? team.name : 'Unknown Team';
         }
 
@@ -516,7 +555,7 @@
 
         function onWheelStop() {
             const segmentIndex = theWheel.getIndicatedSegment().text;
-            selectedTeam = teams.find(t => t.abbreviation === segmentIndex);
+            selectedTeam = (window.wheelTeams || teams).find(t => t.abbreviation === segmentIndex);
             
             if (selectedTeam) {
                 updateArrowIndicator();
@@ -531,8 +570,9 @@
         }
 
         function showPlayerModal(team) {
-            document.getElementById('modal-team-name').textContent = `Select a Player from ${team.name}`;
+            document.getElementById('modal-team-name').textContent = `Select a Player from the ${team.name}:`;
             document.getElementById('playerModal').style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
             selectedTeam = team;
             
             // Reset modal state
@@ -794,6 +834,7 @@
         // Modal close functionality
         document.querySelector('.close').addEventListener('click', function() {
             document.getElementById('playerModal').style.display = 'none';
+            document.body.style.overflow = ''; // Restore scrolling
             resetSpinButton();
             selectedPlayer = null;
             selectedTeam = null;
@@ -803,6 +844,7 @@
             const modal = document.getElementById('playerModal');
             if (event.target === modal) {
                 modal.style.display = 'none';
+                document.body.style.overflow = ''; // Restore scrolling
                 resetSpinButton();
                 selectedPlayer = null;
                 selectedTeam = null;
