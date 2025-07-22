@@ -16,12 +16,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
         }
 
         .container {
             text-align: center;
-            max-width: 1200px;
+            max-width: 1400px;
             width: 100%;
         }
 
@@ -48,6 +48,14 @@
             to { box-shadow: 0 12px 40px rgba(255, 215, 0, 0.6); }
         }
 
+        .scoring-overview {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
         .teams-container {
             display: flex;
             justify-content: center;
@@ -61,7 +69,7 @@
             padding: 25px;
             border-radius: 15px;
             backdrop-filter: blur(10px);
-            min-width: 250px;
+            min-width: 350px;
             border: 2px solid transparent;
             transition: all 0.3s ease;
         }
@@ -69,19 +77,20 @@
         .team.winner {
             background: rgba(255, 215, 0, 0.2);
             border-color: #ffd700;
-            transform: scale(1.05);
+            transform: scale(1.02);
         }
 
         .team h2 {
             margin-top: 0;
             margin-bottom: 15px;
-            font-size: 1.3em;
+            font-size: 1.4em;
         }
 
         .team ul {
             list-style: none;
             padding: 0;
             text-align: left;
+            margin-bottom: 20px;
         }
 
         .team li {
@@ -92,9 +101,79 @@
             font-size: 0.9em;
         }
 
-        .score {
-            font-size: 1.2em;
+        .attributes-score {
+            font-size: 1.3em;
             font-weight: bold;
+            color: #ffd700;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .score-breakdown {
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .score-item {
+            display: inline-block;
+            margin: 5px 10px;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .won { background: rgba(76, 175, 80, 0.3); color: #4CAF50; }
+        .lost { background: rgba(244, 67, 54, 0.3); color: #f44336; }
+        .tied { background: rgba(255, 152, 0, 0.3); color: #ff9800; }
+
+        .detailed-breakdown {
+            margin-top: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .attribute-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .attribute-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            text-align: left;
+        }
+
+        .attribute-card.won {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .attribute-card.lost {
+            border-color: #f44336;
+            background: rgba(244, 67, 54, 0.2);
+        }
+
+        .attribute-card.tie {
+            border-color: #ff9800;
+            background: rgba(255, 152, 0, 0.2);
+        }
+
+        .attribute-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            text-transform: capitalize;
+        }
+
+        .attribute-value {
+            font-size: 1.2em;
             color: #ffd700;
         }
 
@@ -103,6 +182,7 @@
             gap: 20px;
             justify-content: center;
             flex-wrap: wrap;
+            margin-top: 30px;
         }
 
         .play-again-button, .home-button {
@@ -132,64 +212,26 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
 
-        .stats-summary {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            backdrop-filter: blur(10px);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .stat-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #ffd700;
-        }
-
-        .stat-label {
-            font-size: 0.9em;
-            opacity: 0.8;
+        .team-breakdown {
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🏆 Game Over!</h1>
+        <h1>🏆 Draft Complete!</h1>
 
         <div class="winner-announcement">
             🎉 Player {{ winner }} Wins! 🎉
         </div>
 
-        <div class="stats-summary">
-            <h3>Draft Summary</h3>
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value">{{ game_state.num_players }}</div>
-                    <div class="stat-label">Players</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ game_state.turn|add:"-1" }}</div>
-                    <div class="stat-label">Rounds</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ game_state.num_players|multiply:5 }}</div>
-                    <div class="stat-label">Total Picks</div>
-                </div>
-            </div>
+        <div class="scoring-overview">
+            <h3>📊 Comprehensive Team Analysis</h3>
+            <p>Teams were evaluated across {{ total_attributes }} different player attributes from comprehensive NBA data. 
+               The team with the highest total in each attribute wins that category.</p>
         </div>
 
         <div class="teams-container">
@@ -198,9 +240,18 @@
                 <h2>
                     Player {{ team.player_num }}'s Team {% if team.is_winner %}👑{% endif %}
                 </h2>
-                <div class="score">
-                    Score: {{ team.score }}
+                
+                <div class="attributes-score">
+                    Attributes Won: {{ team.attributes_won }} / {{ total_attributes }}
                 </div>
+
+                <div class="score-breakdown">
+                    <div class="score-item won">Won: {{ team.score_details|count_won }}</div>
+                    <div class="score-item lost">Lost: {{ team.score_details|count_lost }}</div>
+                    <div class="score-item tied">Tied: {{ team.score_details|count_tied }}</div>
+                </div>
+
+                <h4>🏀 Team Roster:</h4>
                 <ul>
                     {% for player in team.roster %}
                     <li><strong>{{ player.name }}</strong> ({{ player.position }})</li>
@@ -208,8 +259,51 @@
                     <li><em>No players drafted</em></li>
                     {% endfor %}
                 </ul>
+
+                <div class="team-breakdown">
+                    <h5>Sample Winning Attributes:</h5>
+                    {% for attr_name, attr_data in team.score_details.items %}
+                        {% if attr_data.won == True and forloop.counter <= 5 %}
+                            <div class="attribute-card won" style="margin: 5px 0; padding: 8px;">
+                                <strong>{{ attr_name|replace_underscores }}:</strong> {{ attr_data.value }} ✓
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
             </div>
             {% endfor %}
+        </div>
+
+        <div class="detailed-breakdown">
+            <h3>🔍 All Attributes Comparison</h3>
+            <p>Showing all {{ total_attributes }} attributes evaluated for comprehensive team analysis.</p>
+            
+            <div class="attribute-grid">
+                {% for attr_name in all_attributes %}
+                    {% for team in teams_display_data %}
+                        {% if forloop.first %}
+                            <div class="attribute-card">
+                                <div class="attribute-name">{{ attr_name|replace_underscores }}</div>
+                                {% for team_data in teams_display_data %}
+                                    {% with team_data.score_details|get_item:attr_name as attr_data %}
+                                        <div style="margin: 5px 0; padding: 3px;">
+                                            <strong>Player {{ team_data.player_num }}:</strong> 
+                                            <span class="attribute-value">{{ attr_data.value|default:"0" }}</span>
+                                            {% if attr_data.won == True %}
+                                                <span style="color: #4CAF50;">✓</span>
+                                            {% elif attr_data.won == False %}
+                                                <span style="color: #f44336;">✗</span>
+                                            {% else %}
+                                                <span style="color: #ff9800;">=</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endwith %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            </div>
         </div>
 
         <div class="controls">
@@ -219,21 +313,20 @@
     </div>
 
     <script>
-        // Add some celebration effects
-        console.log('Game Over! Winner: Player {{ winner }}');
+        // Celebration effects
+        console.log('🎉 Game Complete! Winner: Player {{ winner }}');
+        console.log('📊 Total attributes evaluated: {{ total_attributes }}');
         
-        // Simple confetti effect simulation with console celebration
-        setTimeout(() => {
-            console.log('🎉🎊🏆 CONGRATULATIONS PLAYER {{ winner }}! 🏆🎊🎉');
-        }, 1000);
-
-        // Auto-scroll to show all teams if needed
-        if (window.innerHeight < document.body.scrollHeight) {
-            setTimeout(() => {
-                window.scrollTo({
-                    top: document.querySelector('.teams-container').offsetTop - 50,
-                    behavior: 'smooth'
-                });
+        // Auto-scroll for mobile
+        if (window.innerWidth < 768) {
+            setTimeout(function() {
+                var teamsContainer = document.querySelector('.teams-container');
+                if (teamsContainer) {
+                    teamsContainer.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }
             }, 2000);
         }
     </script>
